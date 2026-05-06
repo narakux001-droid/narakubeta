@@ -1,6 +1,140 @@
+--// LOADING SCREEN
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+--// GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "LoadingScreen"
+gui.ResetOnSpawn = false
+gui.Parent = playerGui
+
+--// FRAME
+local frame = Instance.new("Frame")
+frame.Parent = gui
+frame.Size = UDim2.new(0,290,0,250)
+frame.Position = UDim2.new(0.5,0,0.5,0)
+frame.AnchorPoint = Vector2.new(0.5,0.5)
+frame.BackgroundColor3 = Color3.fromRGB(15,15,15)
+frame.BorderSizePixel = 0
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0,8)
+frameCorner.Parent = frame
+
+--// IMAGE
+local image = Instance.new("ImageLabel")
+image.Parent = frame
+image.Size = UDim2.new(1,0,1,0)
+image.BackgroundTransparency = 1
+image.Image = "rbxassetid://85521644284429"
+
+local imgCorner = Instance.new("UICorner")
+imgCorner.CornerRadius = UDim.new(0,8)
+imgCorner.Parent = image
+
+local stroke = Instance.new("UIStroke", image)
+stroke.Color = Color3.fromRGB(0,255,255)
+
+--// GLOW IMAGE (CYAN WHITE)
+local gradient = Instance.new("UIGradient")
+gradient.Parent = image
+gradient.Color = ColorSequence.new{
+ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,255)),
+ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
+}
+gradient.Offset = Vector2.new(-1,0)
+
+--// TEXT
+local text = Instance.new("TextLabel")
+text.Parent = frame
+text.Size = UDim2.new(1,-20,0,20)
+text.Position = UDim2.new(0,10,1,-40)
+text.BackgroundTransparency = 1
+text.Text = "Loading script..."
+text.TextColor3 = Color3.fromRGB(255,255,255)
+text.TextScaled = false
+text.TextSize = 16
+text.Font = Enum.Font.DenkOne
+text.TextXAlignment = Enum.TextXAlignment.Center
+
+--// TEXT GRADIENT CYAN WHITE
+local textGradient = Instance.new("UIGradient")
+textGradient.Parent = text
+textGradient.Color = ColorSequence.new{
+ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,255)),
+ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
+}
+
+--// LOADING BAR BACKGROUND
+local barBG = Instance.new("Frame")
+barBG.Parent = frame
+barBG.Size = UDim2.new(1,-20,0,6)
+barBG.Position = UDim2.new(0,10,1,-15)
+barBG.BackgroundColor3 = Color3.fromRGB(40,40,40)
+barBG.BorderSizePixel = 0
+
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(1,0)
+barCorner.Parent = barBG
+
+--// LOADING BAR
+local bar = Instance.new("Frame")
+bar.Parent = barBG
+bar.Size = UDim2.new(0,0,1,0)
+bar.BackgroundColor3 = Color3.fromRGB(255,255,255)
+bar.BorderSizePixel = 0
+
+local barCorner2 = Instance.new("UICorner")
+barCorner2.CornerRadius = UDim.new(1,0)
+barCorner2.Parent = bar
+
+--// BAR GRADIENT (CYAN WHITE MUTER)
+local barGradient = Instance.new("UIGradient")
+barGradient.Parent = bar
+barGradient.Color = ColorSequence.new{
+ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,255)),
+ColorSequenceKeypoint.new(1, Color3.fromRGB(255,255,255))
+}
+barGradient.Rotation = 0
+
+--// ANIMATION
+
+-- Glow image jalan
+local glowTween = TweenService:Create(
+gradient,
+TweenInfo.new(5, Enum.EasingStyle.Linear),
+{Offset = Vector2.new(1,0)}
+)
+
+-- Bar loading isi
+local barTween = TweenService:Create(
+bar,
+TweenInfo.new(5, Enum.EasingStyle.Linear),
+{Size = UDim2.new(1,0,1,0)}
+)
+
+-- Gradient muter
+local rotateTween = TweenService:Create(
+barGradient,
+TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
+{Rotation = 90}
+)
+
+glowTween:Play()
+barTween:Play()
+rotateTween:Play()
+
+glowTween.Completed:Wait()
+
+--// REMOVE GUI
+gui:Destroy()
+
 --// =========================================
 --// NARAKU BETA UI + FEATURE SYSTEM
---// ARCHIMEDES+TERRAIN+FLY+MUSIC+ANTIAFK
+--// ARCHIMEDES+TERRAIN+FLY+SPEED+ANTIAFK
 --// =========================================
 
 local Players = game:GetService("Players")
@@ -316,7 +450,7 @@ FITUR TERSEDIA
 ▫️ ARCHIMEDES
 ▫️ FLY
 ▫️ TERRAIN
-▫️ Rejoin
+▫️ SPEED
 ]])
 
 createInfo([[
