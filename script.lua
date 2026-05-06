@@ -1,3 +1,11 @@
+--// =========================================
+--// NARAKU BETA PROTECT WRAPPER (TOP)
+--// =========================================
+
+local HttpService = game:GetService("HttpService")
+
+local RAW_SCRIPT = [[
+
 --// LOADING SCREEN
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
@@ -989,3 +997,36 @@ flyBtn.MouseButton1Click:Connect(function()
 	end)
 
 end)
+
+]]
+
+--// =========================================
+--// NARAKU EXECUTOR (BOTTOM)
+--// =========================================
+
+local function encode(str)
+    return HttpService:Base64Encode(str)
+end
+
+local function decode(str)
+    return HttpService:Base64Decode(str)
+end
+
+-- encode
+local encoded = encode(RAW_SCRIPT)
+
+-- split biar agak samar
+local half = math.floor(#encoded / 2)
+local part1 = string.sub(encoded, 1, half)
+local part2 = string.sub(encoded, half + 1)
+
+local final = part1 .. part2
+
+-- run
+local success, err = pcall(function()
+    loadstring(decode(final))()
+end)
+
+if not success then
+    warn("NARAKU ERROR:", err)
+end
