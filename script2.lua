@@ -56,6 +56,55 @@ local Assets = {
 {Id="8928760105",Name="suaveee~",Type="Audio"},
 {Id="103093530102792",Name="chinese remix",Type="Audio"},
 
+-- DJ / BREAKBEAT
+{Id="97212310868241",Name="DJ Drop No Lie",Type="Audio"},
+{Id="139049085515888",Name="DJ Boxing On The Star",Type="Audio"},
+{Id="109749726405984",Name="DJ Drop The Bass",Type="Audio"},
+{Id="135356574120184",Name="DJ Propaganda",Type="Audio"},
+{Id="83777453179914",Name="DJ Party People",Type="Audio"},
+{Id="109184193897016",Name="DJ Shake That",Type="Audio"},
+{Id="116358628732093",Name="DJ Wake Up",Type="Audio"},
+{Id="109207664651325",Name="DJ Boomerang",Type="Audio"},
+{Id="95158960995959",Name="DJ Party Song",Type="Audio"},
+{Id="94197925697408",Name="DJ Low Track",Type="Audio"},
+{Id="110936152657534",Name="DJ Crazy Dope",Type="Audio"},
+{Id="85427648559465",Name="DJ Phut Hon",Type="Audio"},
+{Id="71524249419499",Name="DJ Baile Funk 10",Type="Audio"},
+{Id="74810971700392",Name="DJ Madu Dan Garam",Type="Audio"},
+{Id="108298274142964",Name="DJ Sound Horeg Prindavan",Type="Audio"},
+{Id="75732729256441",Name="DJ India",Type="Audio"},
+{Id="127620210026197",Name="DJ Sayang Culik Aku Dong",Type="Audio"},
+{Id="85857435480264",Name="DJ Khalayan Tingkat Tinggi",Type="Audio"},
+{Id="116255319981650",Name="DJ Jamilah Aisyah",Type="Audio"},
+{Id="104207837699519",Name="DJ Tabole Bale",Type="Audio"},
+{Id="77533933904801",Name="DJ Coba Coba",Type="Audio"},
+{Id="84272432192031",Name="DJ Mejikuhibinui",Type="Audio"},
+{Id="118390472006859",Name="DJ Party Shaker",Type="Audio"},
+{Id="90145710334449",Name="DJ Lu Mampu Ga Bos",Type="Audio"},
+{Id="96077163288111",Name="DJ Jika Tidak Hari Ini",Type="Audio"},
+{Id="16662832435",Name="DJ Pusing Palak Barbie",Type="Audio"},
+{Id="109025172796477",Name="DJ Galaxy",Type="Audio"},
+{Id="112443233864493",Name="DJ Wale Babu",Type="Audio"},
+{Id="106291412410472",Name="DJ Kangen Banget",Type="Audio"},
+{Id="99275097706406",Name="DJ Mati Aku Dikejar Cinta",Type="Audio"},
+{Id="111530724718992",Name="DJ Pargoy Cenat Cenut",Type="Audio"},
+{Id="105935548669522",Name="DJ Funkot Stesu Stesu",Type="Audio"},
+{Id="127548536837903",Name="DJ Funkot Velocity",Type="Audio"},
+{Id="76319653516761",Name="DJ Mantap",Type="Audio"},
+{Id="104291477079374",Name="DJ Lupa Ingat",Type="Audio"},
+{Id="1844008189",Name="DJ Turn The Music",Type="Audio"},
+{Id="73257575772632",Name="DJ Fiesta",Type="Audio"},
+{Id="101608805472261",Name="DJ Mexico King",Type="Audio"},
+{Id="101419525809543",Name="DJ Ee Ee Kenceng Banget",Type="Audio"},
+{Id="90471492509215",Name="DJ Pong Pong Enak",Type="Audio"},
+{Id="1842658587",Name="Megamix",Type="Audio"},
+{Id="91089804280618",Name="Suka Suka Bahagia",Type="Audio"},
+{Id="136842585273816",Name="Nanana Menissu",Type="Audio"},
+{Id="70860648654984",Name="Funkot Tung Tung Sahur",Type="Audio"},
+{Id="79073283903510",Name="Joget Lalala",Type="Audio"},
+{Id="109109569895008",Name="Capybara Song",Type="Audio"},
+{Id="137067689748748",Name="Pargoy Bass",Type="Audio"},
+
 -- MODEL
 {Id="88109389533828",Name="Mini Game Catur",Type="Model"},
 {Id="71333106773028",Name="Tempat Dance + Laser Light",Type="Model"},
@@ -68,6 +117,73 @@ local Assets = {
 {Id="84224378840831",Name="Grey",Type="Model"},
 {Id="111582364751260",Name="Poster Club/Hangout",Type="Model"},
 {Id="78395325106323",Name="Panggung Club",Type="Model"},
+
+-- MOBIL SPORT
+{Id="17887334735",Name="Mobil Sport Kiri",Type="Model"},
+{Id="8612200480",Name="Mobil Sport Tengah",Type="Model"},
+{Id="16221969454",Name="Mobil Sport Kanan",Type="Model"},
+{Id="11482215712",Name="Mobil Sport Pajangan Kanan",Type="Model"},
+{Id="8573316692",Name="Mobil Sport Tengah Kanan",Type="Model"},
+{Id="15617446681",Name="Mobil Sport Tengah Kiri",Type="Model"},
+{Id="9597739042",Name="Mobil Sport Kiri 2",Type="Model"},
+
+-- CLUB / SYSTEM
+{Id="112125949857026",Name="Asset Club",Type="Model"},
+{Id="12134644031",Name="Lampu Club",Type="Model"},
+{Id="12243819949",Name="Lampu Club 2",Type="Model"},
+{Id="116176520116612",Name="Perlampuan",Type="Model"},
+{Id="127446024996202",Name="Bahan Rintangan",Type="Model"},
+{Id="132645454478689",Name="Bar System",Type="Model"},
+{Id="11324928349",Name="Asset Club 2",Type="Model"},
+{Id="93887048649600",Name="Asset Club 3",Type="Model"},
+{Id="2419052017",Name="Asset Club 4",Type="Model"},
+{Id="3337681421",Name="Rintangan Balok Es",Type="Model"},
+{Id="108638710274095",Name="Rintangan WASD",Type="Model"},
+{Id="86891107200189",Name="Running Text 1",Type="Model"},
+{Id="138846299611773",Name="Running Text 2",Type="Model"},
+{Id="114141633540686",Name="Carry & Sync Yahayuk",Type="Model"},
+{Id="73716335524617",Name="Top Bar Emote & Dance",Type="Model"},
+{Id="84916144402521",Name="Top Bar Jump Setting",Type="Model"},
+{Id="115896122614027",Name="Costume Inventory",Type="Model"},
+{Id="112399731456580",Name="Top Bar Music",Type="Model"},
+{Id="129135597569550",Name="Teleport Like The Forge",Type="Model"},
+{Id="101298576974951",Name="1TRY COMMUNITY x JRII",Type="Model"},
+
+-- POHON / DEKOR
+{Id="132020776739348",Name="Pohon Sakura",Type="Model"},
+{Id="136445038140614",Name="Tower Kit",Type="Model"},
+{Id="113441934528719",Name="Slap Tower",Type="Model"},
+{Id="78234543162038",Name="Tip Jar System",Type="Model"},
+{Id="3193163503",Name="Pohon Merah",Type="Model"},
+{Id="133687733400950",Name="Bunga Pink 1",Type="Model"},
+{Id="104559950887920",Name="Bunga Pink 2",Type="Model"},
+{Id="137477529471607",Name="Bunga Pink 3",Type="Model"},
+
+-- RINTANGAN
+{Id="93465121688033",Name="Rintangan 1",Type="Model"},
+{Id="128617011504389",Name="Rintangan 2",Type="Model"},
+{Id="113829486683208",Name="Rintangan Obby 1",Type="Model"},
+{Id="101301605071292",Name="Rintangan Obby 2",Type="Model"},
+{Id="90448082026423",Name="Coil Obby",Type="Model"},
+{Id="78520719849497",Name="Tangga Oren Dobel 2",Type="Model"},
+{Id="99394595130321",Name="Kayu Tumbang 3",Type="Model"},
+{Id="105191186071760",Name="Tangga Anyar V0.1",Type="Model"},
+{Id="97504176428638",Name="Obby Pack 0.3",Type="Model"},
+{Id="136112300875992",Name="Jamur Lengkap",Type="Model"},
+{Id="139829802382845",Name="Rantai Mount Age",Type="Model"},
+{Id="77578999407354",Name="Jagar Karat",Type="Model"},
+{Id="71723529723606",Name="Pulau Apung V1",Type="Model"},
+{Id="82022409082407",Name="Vilar Modif V1",Type="Model"},
+{Id="86895047012850",Name="Filar Jam V1",Type="Model"},
+{Id="110971711205972",Name="Bonsai Japan V1",Type="Model"},
+{Id="102686018314225",Name="Rintangan Obstacle Biru V6",Type="Model"},
+
+-- HORROR
+{Id="7040220313",Name="Kuntilanak",Type="Model"},
+{Id="8534290297",Name="Pocong",Type="Model"},
+{Id="12748751012",Name="Slendrina",Type="Model"},
+
+-- VIP CLUB
 {Id="138652299586117",Name="Aset Club VIP 5",Type="Model"},
 {Id="80122802149294",Name="Aset Club VIP 5",Type="Model"},
 {Id="92299315909169",Name="Aset Club VIP 5",Type="Model"},
@@ -78,6 +194,8 @@ local Assets = {
 {Id="130430113488134",Name="Aset Club VIP 5",Type="Model"},
 {Id="98583232229153",Name="Aset Club VIP 5",Type="Model"},
 {Id="104128055611438",Name="Aset Club VIP 5",Type="Model"},
+
+-- OTHER MODEL
 {Id="12686057924",Name="Bahan Club",Type="Model"},
 {Id="92878930058570",Name="Tool Hiu Terbang",Type="Model"},
 {Id="116134867908147",Name="Bambu Daun",Type="Model"},
@@ -97,9 +215,18 @@ local Assets = {
 {Id="17839304279",Name="Sky Bagus 5",Type="Decal"},
 {Id="16642336373",Name="Sky Bagus 6",Type="Decal"},
 {Id="15493730673",Name="Sky Bagus 7",Type="Decal"},
-{Id="16676792127",Name="Sky Bagus 8",Type="Decal"}
+{Id="16676792127",Name="Sky Bagus 8",Type="Decal"},
+{Id="4607457995",Name="Realistic Sky",Type="Decal"},
+{Id="13107361022",Name="Anime Sky",Type="Decal"},
+{Id="10594688909",Name="Cartoon Sky",Type="Decal"},
+{Id="116402178504134",Name="Sky",Type="Decal"},
+{Id="15502592084",Name="Sunset Sky",Type="Decal"},
+{Id="11284918730",Name="Galaxy Sky",Type="Decal"},
+{Id="16262385808",Name="Sky HD",Type="Decal"}
 
 }
+
+return Assets
 
 -- LOAD SAVED
 for _,v in pairs(SavedAssets) do
@@ -278,7 +405,7 @@ Instance.new("UICorner",searchBtn).CornerRadius = UDim.new(0,5)
 -- SCROLL
 local scroll = Instance.new("ScrollingFrame")
 scroll.Parent = panel
-scroll.Size = UDim2.new(1,-6,0,190)
+scroll.Size = UDim2.new(1,-6,0,215)
 scroll.Position = UDim2.new(0,3,0,86)
 scroll.BackgroundColor3 = Color3.fromRGB(0,0,0)
 scroll.BackgroundTransparency = 0.35
