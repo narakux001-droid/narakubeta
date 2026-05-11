@@ -1,0 +1,761 @@
+--[[
+╔══════════════════════════════════════════════════╗
+║   TRANSFORM & MANIPULASI MODULE                  ║
+║   Untuk Tools Panel — BY SYGKMUNII               ║
+║   Paste sebagai LocalScript di StarterGui        ║
+║   FITUR:                                         ║
+║   • Move Part XYZ (nilai angka tepat)            ║
+║   • Resize Part XYZ (nilai angka)                ║
+║   • Rotate Part XYZ (derajat)                    ║
+║   • Snap to Grid (0.25/0.5/1/2/4 stud)          ║
+║   • Rotate Snap (15/45/90 derajat)               ║
+║   • Clone & Offset                               ║
+║   • Pivot Reset                                  ║
+║   • Read dari klik part / Explorer               ║
+╚══════════════════════════════════════════════════╝
+--]]
+local UIS=game:GetService("UserInputService")
+local TS=game:GetService("TweenService")
+local CG=game:GetService("CoreGui")
+local WS=game:GetService("Workspace")
+local PLR=game:GetService("Players")
+local RS=game:GetService("RunService")
+local Sel;pcall(function()Sel=game:GetService("Selection")end)
+
+-- Cleanup panel lama
+pcall(function()
+  local o=CG:FindFirstChild("XFM_Panel");if o then o:Destroy()end
+end)
+
+-- ══════════════════════════════════════
+-- WARNA
+-- ══════════════════════════════════════
+local C={
+  BG    = Color3.fromRGB(7,8,12),
+  BG1   = Color3.fromRGB(12,14,20),
+  BG2   = Color3.fromRGB(18,20,30),
+  BD    = Color3.fromRGB(0,140,200),
+  A0    = Color3.fromRGB(0,190,255),
+  A1    = Color3.fromRGB(30,215,255),
+  T0    = Color3.fromRGB(220,235,255),
+  T1    = Color3.fromRGB(150,175,210),
+  T2    = Color3.fromRGB(80,105,145),
+  T3    = Color3.fromRGB(40,55,80),
+  GRN   = Color3.fromRGB(35,215,115),
+  RED   = Color3.fromRGB(255,65,75),
+  BLU   = Color3.fromRGB(45,155,255),
+  ORG   = Color3.fromRGB(255,150,35),
+  YLW   = Color3.fromRGB(255,205,45),
+  CYN   = Color3.fromRGB(0,205,205),
+  PNK   = Color3.fromRGB(255,85,175),
+  XC    = Color3.fromRGB(180,40,40),
+  XH    = Color3.fromRGB(220,50,50),
+  YC    = Color3.fromRGB(40,140,40),
+  YH    = Color3.fromRGB(55,180,55),
+  ZC    = Color3.fromRGB(30,60,180),
+  ZH    = Color3.fromRGB(45,90,220),
+}
+
+-- ══════════════════════════════════════
+-- UTILITAS
+-- ══════════════════════════════════════
+local LIG=game:GetService("Lighting")
+local function flash(p,col)
+  local h=Instance.new("Highlight")
+  h.FillColor=col or C.GRN;h.FillTransparency=0.05
+  h.OutlineColor=Color3.new(1,1,1)
+  h.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+  h.Adornee=p;h.Parent=LIG
+  TS:Create(h,TweenInfo.new(0.45),{FillTransparency=1}):Play()
+  task.delay(0.55,function()pcall(function()h:Destroy()end)end)
+end
+local function rayPart(x,y)
+  local sg=CG:FindFirstChild("XFM_Panel")
+  local cam=WS.CurrentCamera;local ray=cam:ScreenPointToRay(x,y)
+  local p=RaycastParams.new()
+  p.FilterDescendantsInstances=sg and{sg}or{}
+  p.FilterType=Enum.RaycastFilterType.Exclude
+  return WS:Raycast(ray.Origin,ray.Direction*2000,p)
+end
+
+-- ══════════════════════════════════════
+-- STATE
+-- ══════════════════════════════════════
+local xfm={
+  p        = nil,   -- part aktif
+  hl       = nil,   -- highlight aktif
+  picking  = false, -- sedang mode klik pilih
+  conn     = nil,   -- koneksi klik
+  snapGrid = 1,     -- grid snap stud
+  snapRot  = 45,    -- rotasi snap derajat
+  -- label status
+  stLbl    = nil,
+  -- label readout pos/size/rot
+  posLbls  = {},
+  sizLbls  = {},
+  rotLbls  = {},
+}
+
+-- ══════════════════════════════════════
+-- HIGHLIGHT HELPER
+-- ══════════════════════════════════════
+local function xfm_hl()
+  if xfm.hl then
+    pcall(function()xfm.hl.Adornee=nil end)
+  end
+  if xfm.p then
+    if not xfm.hl or not xfm.hl.Parent then
+      local h=Instance.new("Highlight")
+      h.FillColor=C.A0;h.FillTransparency=0.55
+      h.OutlineColor=C.A1;h.OutlineTransparency=0
+      h.DepthMode=Enum.HighlightDepthMode.Occluded
+      h.Parent=LIG;xfm.hl=h
+    end
+    xfm.hl.Adornee=xfm.p
+  end
+end
+
+-- ══════════════════════════════════════
+-- STATUS & READOUT
+-- ══════════════════════════════════════
+local function xfm_updateReadout()
+  if not xfm.p then return end
+  local p=xfm.p
+  local pos=p.Position
+  local sz=p.Size
+  local rx,ry,rz=p.CFrame:ToEulerAnglesXYZ()
+  -- pos
+  if xfm.posLbls.X then xfm.posLbls.X.Text=string.format("%.2f",pos.X)end
+  if xfm.posLbls.Y then xfm.posLbls.Y.Text=string.format("%.2f",pos.Y)end
+  if xfm.posLbls.Z then xfm.posLbls.Z.Text=string.format("%.2f",pos.Z)end
+  -- size
+  if xfm.sizLbls.X then xfm.sizLbls.X.Text=string.format("%.2f",sz.X)end
+  if xfm.sizLbls.Y then xfm.sizLbls.Y.Text=string.format("%.2f",sz.Y)end
+  if xfm.sizLbls.Z then xfm.sizLbls.Z.Text=string.format("%.2f",sz.Z)end
+  -- rot
+  if xfm.rotLbls.X then xfm.rotLbls.X.Text=string.format("%.1f",math.deg(rx))end
+  if xfm.rotLbls.Y then xfm.rotLbls.Y.Text=string.format("%.1f",math.deg(ry))end
+  if xfm.rotLbls.Z then xfm.rotLbls.Z.Text=string.format("%.1f",math.deg(rz))end
+end
+
+local function xfm_st()
+  if not xfm.stLbl then return end
+  if xfm.picking then
+    xfm.stLbl.Text="✦ Klik Part di Viewport..."
+    xfm.stLbl.TextColor3=C.YLW
+  elseif xfm.p then
+    xfm.stLbl.Text="Part: "..xfm.p.Name
+    xfm.stLbl.TextColor3=C.GRN
+  else
+    xfm.stLbl.Text="Pilih Part dulu"
+    xfm.stLbl.TextColor3=C.T3
+  end
+end
+
+-- ══════════════════════════════════════
+-- PICK PART
+-- ══════════════════════════════════════
+local function xfm_startPick()
+  if xfm.picking then
+    -- batalkan
+    xfm.picking=false
+    if xfm.conn then pcall(function()xfm.conn:Disconnect()end);xfm.conn=nil end
+    xfm_st();return
+  end
+  xfm.picking=true;xfm_st()
+  xfm.conn=UIS.InputBegan:Connect(function(inp,gpe)
+    if gpe then return end
+    if inp.UserInputType~=Enum.UserInputType.MouseButton1
+    and inp.UserInputType~=Enum.UserInputType.Touch then return end
+    local res=rayPart(inp.Position.X,inp.Position.Y)
+    if res and res.Instance and res.Instance:IsA("BasePart")then
+      xfm.p=res.Instance
+      xfm.picking=false
+      pcall(function()xfm.conn:Disconnect()end);xfm.conn=nil
+      xfm_hl();xfm_st();xfm_updateReadout()
+    end
+  end)
+end
+
+local function xfm_fromExplorer()
+  if not Sel then return end
+  for _,o in ipairs(Sel:Get())do
+    if o:IsA("BasePart")then
+      xfm.p=o;xfm_hl();xfm_st();xfm_updateReadout();return
+    end
+  end
+end
+
+-- ══════════════════════════════════════
+-- TRANSFORM ACTIONS
+-- ══════════════════════════════════════
+local function xfm_setPos(axis,val)
+  if not xfm.p then return end
+  local p=xfm.p.Position
+  if     axis=="X" then xfm.p.Position=Vector3.new(val,p.Y,p.Z)
+  elseif axis=="Y" then xfm.p.Position=Vector3.new(p.X,val,p.Z)
+  else                  xfm.p.Position=Vector3.new(p.X,p.Y,val) end
+  flash(xfm.p,C.A0);xfm_updateReadout()
+end
+
+local function xfm_moveRel(axis,delta)
+  if not xfm.p then return end
+  local p=xfm.p.Position
+  if     axis=="X" then xfm.p.Position=Vector3.new(p.X+delta,p.Y,p.Z)
+  elseif axis=="Y" then xfm.p.Position=Vector3.new(p.X,p.Y+delta,p.Z)
+  else                  xfm.p.Position=Vector3.new(p.X,p.Y,p.Z+delta) end
+  flash(xfm.p,C.CYN);xfm_updateReadout()
+end
+
+local function xfm_setSize(axis,val)
+  if not xfm.p then return end
+  val=math.max(val,0.05)
+  local s=xfm.p.Size
+  if     axis=="X" then xfm.p.Size=Vector3.new(val,s.Y,s.Z)
+  elseif axis=="Y" then xfm.p.Size=Vector3.new(s.X,val,s.Z)
+  else                  xfm.p.Size=Vector3.new(s.X,s.Y,val) end
+  flash(xfm.p,C.GRN);xfm_updateReadout()
+end
+
+local function xfm_scaleUniform(factor)
+  if not xfm.p then return end
+  local s=xfm.p.Size
+  xfm.p.Size=Vector3.new(
+    math.max(s.X*factor,0.05),
+    math.max(s.Y*factor,0.05),
+    math.max(s.Z*factor,0.05))
+  flash(xfm.p,C.GRN);xfm_updateReadout()
+end
+
+local function xfm_setRot(axis,deg)
+  if not xfm.p then return end
+  local rx,ry,rz=xfm.p.CFrame:ToEulerAnglesXYZ()
+  local r=math.rad(deg)
+  if     axis=="X" then xfm.p.CFrame=CFrame.new(xfm.p.Position)*CFrame.Angles(r,ry,rz)
+  elseif axis=="Y" then xfm.p.CFrame=CFrame.new(xfm.p.Position)*CFrame.Angles(rx,r,rz)
+  else                  xfm.p.CFrame=CFrame.new(xfm.p.Position)*CFrame.Angles(rx,ry,r) end
+  flash(xfm.p,C.ORG);xfm_updateReadout()
+end
+
+local function xfm_rotRel(axis,deg)
+  if not xfm.p then return end
+  local r=math.rad(deg)
+  if     axis=="X" then xfm.p.CFrame=xfm.p.CFrame*CFrame.Angles(r,0,0)
+  elseif axis=="Y" then xfm.p.CFrame=xfm.p.CFrame*CFrame.Angles(0,r,0)
+  else                  xfm.p.CFrame=xfm.p.CFrame*CFrame.Angles(0,0,r) end
+  flash(xfm.p,C.ORG);xfm_updateReadout()
+end
+
+local function xfm_snapPos()
+  if not xfm.p then return end
+  local g=xfm.snapGrid;local p=xfm.p.Position
+  xfm.p.Position=Vector3.new(
+    math.round(p.X/g)*g,
+    math.round(p.Y/g)*g,
+    math.round(p.Z/g)*g)
+  flash(xfm.p,C.GRN);xfm_updateReadout()
+end
+
+local function xfm_snapRot()
+  if not xfm.p then return end
+  local g=xfm.snapRot
+  local rx,ry,rz=xfm.p.CFrame:ToEulerAnglesXYZ()
+  local function sn(v)return math.rad(math.round(math.deg(v)/g)*g)end
+  xfm.p.CFrame=CFrame.new(xfm.p.Position)*CFrame.Angles(sn(rx),sn(ry),sn(rz))
+  flash(xfm.p,C.YLW);xfm_updateReadout()
+end
+
+local function xfm_resetRot()
+  if not xfm.p then return end
+  xfm.p.CFrame=CFrame.new(xfm.p.Position)
+  flash(xfm.p,C.T1);xfm_updateReadout()
+end
+
+local function xfm_pivotReset()
+  -- Reset pivot ke center part (SetPivotOffset ke default)
+  if not xfm.p then return end
+  pcall(function()
+    xfm.p:SetPivotOffset(CFrame.new())
+  end)
+  flash(xfm.p,C.PNK);xfm_updateReadout()
+end
+
+local function xfm_clone()
+  if not xfm.p then return end
+  local cl=xfm.p:Clone()
+  cl.Name=xfm.p.Name.."_Clone"
+  cl.Position=xfm.p.Position+Vector3.new(xfm.p.Size.X+0.2,0,0)
+  cl.Parent=WS
+  xfm.p=cl;xfm_hl();xfm_st();xfm_updateReadout()
+  flash(cl,C.PNK)
+end
+
+local function xfm_cloneOffsetAxis(axis)
+  if not xfm.p then return end
+  local cl=xfm.p:Clone();cl.Name=xfm.p.Name.."_Clone"
+  local s=xfm.p.Size;local p=xfm.p.Position
+  if     axis=="X" then cl.Position=Vector3.new(p.X+s.X+0.1,p.Y,p.Z)
+  elseif axis=="Y" then cl.Position=Vector3.new(p.X,p.Y+s.Y+0.1,p.Z)
+  else                  cl.Position=Vector3.new(p.X,p.Y,p.Z+s.Z+0.1) end
+  cl.Parent=WS;flash(cl,C.PNK)
+end
+
+local function xfm_center()
+  -- Pindah ke 0,Y,0 (tengah map)
+  if not xfm.p then return end
+  xfm.p.Position=Vector3.new(0,xfm.p.Position.Y,0)
+  flash(xfm.p,C.A0);xfm_updateReadout()
+end
+
+local function xfm_groundSnap()
+  -- Taruh part tepat di atas Y=0 (ground)
+  if not xfm.p then return end
+  xfm.p.Position=Vector3.new(
+    xfm.p.Position.X,
+    xfm.p.Size.Y/2,
+    xfm.p.Position.Z)
+  flash(xfm.p,C.GRN);xfm_updateReadout()
+end
+
+-- ══════════════════════════════════════
+-- LIVE READOUT (Heartbeat update saat part dipilih)
+-- ══════════════════════════════════════
+RS.Heartbeat:Connect(function()
+  if xfm.p and xfm.p.Parent then
+    xfm_updateReadout()
+  end
+end)
+
+-- ══════════════════════════════════════
+-- UI BUILDER
+-- ══════════════════════════════════════
+local SG=Instance.new("ScreenGui")
+SG.Name="XFM_Panel";SG.ResetOnSpawn=false;SG.IgnoreGuiInset=true
+SG.ZIndexBehavior=Enum.ZIndexBehavior.Sibling;SG.DisplayOrder=9999;SG.Parent=CG
+
+local PW=310;local PH=720
+local MF=Instance.new("Frame",SG)
+MF.Size=UDim2.new(0,PW,0,PH);MF.Position=UDim2.new(1,-PW-12,0,52)
+MF.BackgroundColor3=C.BG;MF.BorderSizePixel=0;MF.ClipsDescendants=true
+Instance.new("UICorner",MF).CornerRadius=UDim.new(0,12)
+local mfS=Instance.new("UIStroke",MF);mfS.Color=C.BD;mfS.Thickness=1;mfS.Transparency=0.6
+
+-- Stripe atas
+local stripe=Instance.new("Frame",MF)
+stripe.Size=UDim2.new(1,0,0,2);stripe.BackgroundColor3=C.A0;stripe.BorderSizePixel=0;stripe.ZIndex=8
+local strG=Instance.new("UIGradient",stripe)
+strG.Color=ColorSequence.new({
+  ColorSequenceKeypoint.new(0,Color3.new(0,0,0)),
+  ColorSequenceKeypoint.new(0.15,C.A0),
+  ColorSequenceKeypoint.new(0.5,C.A1),
+  ColorSequenceKeypoint.new(0.85,C.A0),
+  ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
+})
+
+-- Header
+local HDR=Instance.new("Frame",MF)
+HDR.Size=UDim2.new(1,0,0,50);HDR.Position=UDim2.new(0,0,0,2)
+HDR.BackgroundTransparency=1;HDR.ZIndex=5
+
+local badge=Instance.new("Frame",HDR)
+badge.Size=UDim2.new(0,36,0,36);badge.Position=UDim2.new(0,12,0.5,-18)
+badge.BackgroundColor3=Color3.fromRGB(0,50,85);badge.BorderSizePixel=0;badge.ZIndex=6
+Instance.new("UICorner",badge).CornerRadius=UDim.new(0,8)
+local bS=Instance.new("UIStroke",badge);bS.Color=C.BD;bS.Thickness=1;bS.Transparency=0.3
+local bIco=Instance.new("TextLabel",badge)
+bIco.Size=UDim2.new(1,0,1,0);bIco.BackgroundTransparency=1;bIco.Text="📐"
+bIco.Font=Enum.Font.GothamBold;bIco.TextSize=18;bIco.ZIndex=7
+
+local hT=Instance.new("TextLabel",HDR)
+hT.Size=UDim2.new(0,160,0,18);hT.Position=UDim2.new(0,56,0,8)
+hT.BackgroundTransparency=1;hT.Text="TRANSFORM & MANIPULASI"
+hT.TextColor3=C.T0;hT.Font=Enum.Font.GothamBold;hT.TextSize=11
+hT.TextXAlignment=Enum.TextXAlignment.Left;hT.ZIndex=6
+
+local hS=Instance.new("TextLabel",HDR)
+hS.Size=UDim2.new(0,180,0,12);hS.Position=UDim2.new(0,56,0,27)
+hS.BackgroundTransparency=1;hS.Text="BY SYGKMUNII  //  v11.0"
+hS.TextColor3=C.A0;hS.Font=Enum.Font.Code;hS.TextSize=9
+hS.TextXAlignment=Enum.TextXAlignment.Left;hS.ZIndex=6
+
+-- Close + Drag
+local closeBtn=Instance.new("TextButton",HDR)
+closeBtn.Size=UDim2.new(0,26,0,26);closeBtn.Position=UDim2.new(1,-36,0.5,-13)
+closeBtn.BackgroundColor3=Color3.fromRGB(80,15,15);closeBtn.Text="✕"
+closeBtn.TextColor3=Color3.fromRGB(255,100,100);closeBtn.Font=Enum.Font.GothamBold
+closeBtn.TextSize=13;closeBtn.BorderSizePixel=0;closeBtn.ZIndex=7
+Instance.new("UICorner",closeBtn).CornerRadius=UDim.new(0,6)
+closeBtn.MouseButton1Click:Connect(function()SG:Destroy()end)
+
+local dragH=Instance.new("TextButton",HDR)
+dragH.Size=UDim2.new(1,-50,1,0);dragH.BackgroundTransparency=1
+dragH.Text="";dragH.BorderSizePixel=0;dragH.ZIndex=6
+
+-- Divider bawah header
+local hDiv=Instance.new("Frame",MF)
+hDiv.Size=UDim2.new(1,-24,0,1);hDiv.Position=UDim2.new(0,12,0,52)
+hDiv.BackgroundColor3=Color3.fromRGB(0,100,145);hDiv.BackgroundTransparency=0.5;hDiv.BorderSizePixel=0
+
+-- ScrollFrame body
+local body=Instance.new("ScrollingFrame",MF)
+body.Size=UDim2.new(1,0,1,0);body.Position=UDim2.new(0,0,0,54)
+body.BackgroundTransparency=1;body.BorderSizePixel=0
+body.ScrollBarThickness=3;body.ScrollBarImageColor3=C.BD
+body.CanvasSize=UDim2.new(0,0,0,0);body.AutomaticCanvasSize=Enum.AutomaticSize.Y
+local bLay=Instance.new("UIListLayout",body)
+bLay.SortOrder=Enum.SortOrder.LayoutOrder;bLay.Padding=UDim.new(0,5)
+local bPad=Instance.new("UIPadding",body)
+bPad.PaddingLeft=UDim.new(0,10);bPad.PaddingRight=UDim.new(0,10)
+bPad.PaddingTop=UDim.new(0,10);bPad.PaddingBottom=UDim.new(0,16)
+
+-- ══════════════════════════════════════
+-- UI HELPERS
+-- ══════════════════════════════════════
+local LO=0
+local function nextLO()LO=LO+1;return LO end
+
+local function mkSec(txt)
+  local f=Instance.new("Frame",body)
+  f.LayoutOrder=nextLO();f.Size=UDim2.new(1,0,0,20)
+  f.BackgroundTransparency=1;f.BorderSizePixel=0
+  local l=Instance.new("TextLabel",f)
+  l.Size=UDim2.new(1,0,1,0);l.BackgroundTransparency=1
+  l.Text=txt;l.TextColor3=C.A0;l.Font=Enum.Font.GothamBold
+  l.TextSize=9;l.TextXAlignment=Enum.TextXAlignment.Left
+end
+
+local function mkDiv()
+  local f=Instance.new("Frame",body)
+  f.LayoutOrder=nextLO();f.Size=UDim2.new(1,0,0,5)
+  f.BackgroundTransparency=1;f.BorderSizePixel=0
+  local l=Instance.new("Frame",f)
+  l.Size=UDim2.new(0.6,0,0,1);l.Position=UDim2.new(0.2,0,0.5,0)
+  l.BackgroundColor3=Color3.fromRGB(0,70,100);l.BackgroundTransparency=0.4;l.BorderSizePixel=0
+  local lg=Instance.new("UIGradient",l)
+  lg.Color=ColorSequence.new({
+    ColorSequenceKeypoint.new(0,Color3.new(0,0,0)),
+    ColorSequenceKeypoint.new(0.5,Color3.new(1,1,1)),
+    ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
+  })
+end
+
+local function mkBtn(txt,bg,bgh,cb,h)
+  local b=Instance.new("TextButton",body)
+  b.LayoutOrder=nextLO();b.Size=UDim2.new(1,0,0,h or 28)
+  b.BackgroundColor3=bg;b.Text=txt
+  b.TextColor3=Color3.fromRGB(210,228,248);b.Font=Enum.Font.GothamBold
+  b.TextSize=10;b.BorderSizePixel=0
+  Instance.new("UICorner",b).CornerRadius=UDim.new(0,7)
+  b.MouseEnter:Connect(function()TS:Create(b,TweenInfo.new(0.1),{BackgroundColor3=bgh}):Play()end)
+  b.MouseLeave:Connect(function()TS:Create(b,TweenInfo.new(0.1),{BackgroundColor3=bg}):Play()end)
+  b.MouseButton1Click:Connect(cb);return b
+end
+
+local function mkBtnRow(defs)
+  -- defs = {{txt,bg,bgh,cb}, ...}
+  local n=#defs
+  local row=Instance.new("Frame",body)
+  row.LayoutOrder=nextLO();row.Size=UDim2.new(1,0,0,28)
+  row.BackgroundTransparency=1;row.BorderSizePixel=0
+  local w=1/n
+  for i,d in ipairs(defs)do
+    local b=Instance.new("TextButton",row)
+    b.Size=UDim2.new(w,-3,1,0);b.Position=UDim2.new((i-1)*w,i==1 and 0 or 3,0,0)
+    b.BackgroundColor3=d[2];b.Text=d[1]
+    b.TextColor3=Color3.fromRGB(210,228,248);b.Font=Enum.Font.GothamBold
+    b.TextSize=9;b.BorderSizePixel=0
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,7)
+    local bg,bgh=d[2],d[3]
+    b.MouseEnter:Connect(function()TS:Create(b,TweenInfo.new(0.1),{BackgroundColor3=bgh}):Play()end)
+    b.MouseLeave:Connect(function()TS:Create(b,TweenInfo.new(0.1),{BackgroundColor3=bg}):Play()end)
+    b.MouseButton1Click:Connect(d[4])
+  end
+end
+
+-- Status bar
+local function mkStatus()
+  local f=Instance.new("Frame",body)
+  f.LayoutOrder=nextLO();f.Size=UDim2.new(1,0,0,22)
+  f.BackgroundColor3=Color3.fromRGB(3,8,14);f.BackgroundTransparency=0.2;f.BorderSizePixel=0
+  Instance.new("UICorner",f).CornerRadius=UDim.new(0,5)
+  local s=Instance.new("UIStroke",f);s.Color=Color3.fromRGB(0,50,75);s.Thickness=1
+  local l=Instance.new("TextLabel",f)
+  l.Size=UDim2.new(1,-10,1,0);l.Position=UDim2.new(0,8,0,0)
+  l.BackgroundTransparency=1;l.Text="Pilih Part dulu"
+  l.TextColor3=C.T3;l.Font=Enum.Font.Code;l.TextSize=9
+  l.TextXAlignment=Enum.TextXAlignment.Left
+  return l
+end
+
+-- XYZ Row: label + 3 input/display + 3 tombol apply
+-- mode: "pos","size","rot"
+local function mkXYZBlock(labelTxt, storeLbls, applyFn, stepFn, stepVal, colX,colY,colZ)
+  -- Header row
+  local hdr=Instance.new("Frame",body)
+  hdr.LayoutOrder=nextLO();hdr.Size=UDim2.new(1,0,0,16)
+  hdr.BackgroundTransparency=1;hdr.BorderSizePixel=0
+  local hl=Instance.new("TextLabel",hdr)
+  hl.Size=UDim2.new(1,0,1,0);hl.BackgroundTransparency=1
+  hl.Text=labelTxt;hl.TextColor3=C.T1;hl.Font=Enum.Font.GothamBold
+  hl.TextSize=9;hl.TextXAlignment=Enum.TextXAlignment.Left
+
+  local axes={"X","Y","Z"}
+  local cols={colX or C.XC, colY or C.YC, colZ or C.ZC}
+  local colsh={
+    colX and Color3.new(math.min(colX.R+0.15,1),colX.G,colX.B) or Color3.fromRGB(210,50,50),
+    colY and Color3.new(colY.R,math.min(colY.G+0.15,1),colY.B) or Color3.fromRGB(50,200,50),
+    colZ and Color3.new(colZ.R,colZ.G,math.min(colZ.B+0.15,1)) or Color3.fromRGB(50,100,240),
+  }
+
+  for i,ax in ipairs(axes)do
+    local row=Instance.new("Frame",body)
+    row.LayoutOrder=nextLO();row.Size=UDim2.new(1,0,0,26)
+    row.BackgroundColor3=Color3.fromRGB(5,10,18);row.BackgroundTransparency=0.15;row.BorderSizePixel=0
+    Instance.new("UICorner",row).CornerRadius=UDim.new(0,6)
+    local rS=Instance.new("UIStroke",row);rS.Color=cols[i];rS.Thickness=1;rS.Transparency=0.6
+
+    -- Axis label
+    local axL=Instance.new("TextLabel",row)
+    axL.Size=UDim2.new(0,18,1,0);axL.Position=UDim2.new(0,6,0,0)
+    axL.BackgroundTransparency=1;axL.Text=ax
+    axL.TextColor3=cols[i];axL.Font=Enum.Font.GothamBold;axL.TextSize=11
+
+    -- Value TextBox
+    local tb=Instance.new("TextBox",row)
+    tb.Size=UDim2.new(0,70,0,18);tb.Position=UDim2.new(0,26,0.5,-9)
+    tb.BackgroundColor3=Color3.fromRGB(0,18,32);tb.Text="0"
+    tb.TextColor3=cols[i];tb.Font=Enum.Font.Code;tb.TextSize=10
+    tb.BorderSizePixel=0;tb.ClearTextOnFocus=false;tb.TextXAlignment=Enum.TextXAlignment.Center
+    Instance.new("UICorner",tb).CornerRadius=UDim.new(0,4)
+    storeLbls[ax]=tb  -- simpan ref
+
+    -- Apply button
+    local applyBtn=Instance.new("TextButton",row)
+    applyBtn.Size=UDim2.new(0,42,0,18);applyBtn.Position=UDim2.new(0,100,0.5,-9)
+    applyBtn.BackgroundColor3=cols[i];applyBtn.Text="SET"
+    applyBtn.TextColor3=Color3.fromRGB(255,255,255);applyBtn.Font=Enum.Font.GothamBold
+    applyBtn.TextSize=8;applyBtn.BorderSizePixel=0
+    Instance.new("UICorner",applyBtn).CornerRadius=UDim.new(0,4)
+    local aC=cols[i];local aH=colsh[i];local aAx=ax
+    applyBtn.MouseEnter:Connect(function()TS:Create(applyBtn,TweenInfo.new(0.1),{BackgroundColor3=aH}):Play()end)
+    applyBtn.MouseLeave:Connect(function()TS:Create(applyBtn,TweenInfo.new(0.1),{BackgroundColor3=aC}):Play()end)
+    applyBtn.MouseButton1Click:Connect(function()
+      local v=tonumber(tb.Text);if v then applyFn(aAx,v)end
+    end)
+    tb.FocusLost:Connect(function(enter)
+      if enter then local v=tonumber(tb.Text);if v then applyFn(aAx,v)end end
+    end)
+
+    -- +/- step buttons
+    local minusBtn=Instance.new("TextButton",row)
+    minusBtn.Size=UDim2.new(0,26,0,18);minusBtn.Position=UDim2.new(0,148,0.5,-9)
+    minusBtn.BackgroundColor3=Color3.fromRGB(10,28,44);minusBtn.Text="-"
+    minusBtn.TextColor3=cols[i];minusBtn.Font=Enum.Font.GothamBold
+    minusBtn.TextSize=13;minusBtn.BorderSizePixel=0
+    Instance.new("UICorner",minusBtn).CornerRadius=UDim.new(0,4)
+    local mAx=ax
+    minusBtn.MouseButton1Click:Connect(function()stepFn(mAx,-stepVal)end)
+
+    local plusBtn=Instance.new("TextButton",row)
+    plusBtn.Size=UDim2.new(0,26,0,18);plusBtn.Position=UDim2.new(0,178,0.5,-9)
+    plusBtn.BackgroundColor3=Color3.fromRGB(10,28,44);plusBtn.Text="+"
+    plusBtn.TextColor3=cols[i];plusBtn.Font=Enum.Font.GothamBold
+    plusBtn.TextSize=13;plusBtn.BorderSizePixel=0
+    Instance.new("UICorner",plusBtn).CornerRadius=UDim.new(0,4)
+    local pAx=ax
+    plusBtn.MouseButton1Click:Connect(function()stepFn(pAx,stepVal)end)
+
+    -- Step size label
+    local stpL=Instance.new("TextLabel",row)
+    stpL.Size=UDim2.new(0,40,1,0);stpL.Position=UDim2.new(0,208,0,0)
+    stpL.BackgroundTransparency=1;stpL.Text="±"..tostring(stepVal)
+    stpL.TextColor3=C.T3;stpL.Font=Enum.Font.Code;stpL.TextSize=9
+    stpL.TextXAlignment=Enum.TextXAlignment.Left
+  end
+end
+
+-- Snap selector row
+local function mkSnapRow(label, options, getter, setter)
+  local f=Instance.new("Frame",body)
+  f.LayoutOrder=nextLO();f.Size=UDim2.new(1,0,0,26)
+  f.BackgroundColor3=Color3.fromRGB(5,10,18);f.BackgroundTransparency=0.15;f.BorderSizePixel=0
+  Instance.new("UICorner",f).CornerRadius=UDim.new(0,6)
+
+  local lbl=Instance.new("TextLabel",f)
+  lbl.Size=UDim2.new(0.38,0,1,0);lbl.Position=UDim2.new(0,8,0,0)
+  lbl.BackgroundTransparency=1;lbl.Text=label
+  lbl.TextColor3=C.T1;lbl.Font=Enum.Font.Code;lbl.TextSize=9
+  lbl.TextXAlignment=Enum.TextXAlignment.Left
+
+  local n=#options;local bW=(0.62)/n
+  local btnRefs={}
+  for i,opt in ipairs(options)do
+    local b=Instance.new("TextButton",f)
+    b.Size=UDim2.new(bW,-2,0,18);b.Position=UDim2.new(0.38+(i-1)*bW,2,0.5,-9)
+    b.Text=tostring(opt)
+    local isActive=(opt==getter())
+    b.BackgroundColor3=isActive and Color3.fromRGB(0,65,105) or Color3.fromRGB(8,18,30)
+    b.TextColor3=isActive and C.A1 or C.T2
+    b.Font=Enum.Font.Code;b.TextSize=9;b.BorderSizePixel=0
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,4)
+    btnRefs[i]=b
+    local ov=opt
+    b.MouseButton1Click:Connect(function()
+      setter(ov)
+      for j,bb in ipairs(btnRefs)do
+        bb.BackgroundColor3=j==i and Color3.fromRGB(0,65,105) or Color3.fromRGB(8,18,30)
+        bb.TextColor3=j==i and C.A1 or C.T2
+      end
+    end)
+  end
+end
+
+-- ══════════════════════════════════════
+-- BUILD UI
+-- ══════════════════════════════════════
+
+-- 1. SELECT PART
+mkSec("■  PILIH PART")
+mkBtn("▶  KLIK PART DI VIEWPORT",Color3.fromRGB(0,45,80),Color3.fromRGB(0,70,115),xfm_startPick,30)
+mkBtn("▶  AMBIL DARI EXPLORER",Color3.fromRGB(0,35,60),Color3.fromRGB(0,55,90),xfm_fromExplorer,28)
+xfm.stLbl=mkStatus()
+mkDiv()
+
+-- 2. POSITION
+mkSec("■  POSITION  (stud)")
+mkXYZBlock(
+  "SET POSISI TEPAT:",
+  xfm.posLbls,
+  xfm_setPos,
+  xfm_moveRel,
+  1,
+  Color3.fromRGB(180,40,40),
+  Color3.fromRGB(40,150,40),
+  Color3.fromRGB(40,80,200)
+)
+mkBtnRow({
+  {"⊕ CENTER MAP",Color3.fromRGB(0,50,80),Color3.fromRGB(0,75,115),xfm_center},
+  {"⊕ GROUND SNAP",Color3.fromRGB(0,60,30),Color3.fromRGB(0,90,45),xfm_groundSnap},
+})
+mkDiv()
+
+-- 3. SIZE
+mkSec("■  SIZE  (stud)")
+mkXYZBlock(
+  "SET UKURAN TEPAT:",
+  xfm.sizLbls,
+  xfm_setSize,
+  function(ax,d)
+    if not xfm.p then return end
+    local s=xfm.p.Size
+    if     ax=="X" then xfm_setSize("X",math.max(s.X+d,0.05))
+    elseif ax=="Y" then xfm_setSize("Y",math.max(s.Y+d,0.05))
+    else                xfm_setSize("Z",math.max(s.Z+d,0.05)) end
+  end,
+  0.5,
+  Color3.fromRGB(150,90,0),
+  Color3.fromRGB(100,50,120),
+  Color3.fromRGB(0,100,110)
+)
+mkBtnRow({
+  {"× 0.5",Color3.fromRGB(80,30,0),Color3.fromRGB(115,45,0),function()xfm_scaleUniform(0.5)end},
+  {"× 2",Color3.fromRGB(0,60,40),Color3.fromRGB(0,90,60),function()xfm_scaleUniform(2)end},
+  {"× 0.25",Color3.fromRGB(60,20,60),Color3.fromRGB(90,30,90),function()xfm_scaleUniform(0.25)end},
+})
+mkDiv()
+
+-- 4. ROTATION
+mkSec("■  ROTATION  (derajat)")
+mkXYZBlock(
+  "SET ROTASI TEPAT:",
+  xfm.rotLbls,
+  xfm_setRot,
+  xfm_rotRel,
+  15,
+  Color3.fromRGB(140,0,90),
+  Color3.fromRGB(0,100,80),
+  Color3.fromRGB(100,80,0)
+)
+mkBtnRow({
+  {"RESET ROT",Color3.fromRGB(50,20,0),Color3.fromRGB(80,30,0),xfm_resetRot},
+  {"PIVOT RESET",Color3.fromRGB(40,0,60),Color3.fromRGB(65,0,90),xfm_pivotReset},
+})
+mkDiv()
+
+-- 5. SNAP TO GRID
+mkSec("■  SNAP TO GRID  (stud)")
+mkSnapRow("Grid size:",{0.25,0.5,1,2,4},
+  function()return xfm.snapGrid end,
+  function(v)xfm.snapGrid=v end)
+mkBtn("⊞  SNAP POSISI KE GRID",Color3.fromRGB(0,60,90),Color3.fromRGB(0,90,130),xfm_snapPos,28)
+mkDiv()
+
+-- 6. ROTATE SNAP
+mkSec("■  ROTATE SNAP  (derajat)")
+mkSnapRow("Rot snap:",{15,30,45,90},
+  function()return xfm.snapRot end,
+  function(v)xfm.snapRot=v end)
+mkBtn("⟳  SNAP ROTASI",Color3.fromRGB(60,30,0),Color3.fromRGB(90,50,0),xfm_snapRot,28)
+mkDiv()
+
+-- 7. CLONE & OFFSET
+mkSec("■  CLONE & OFFSET")
+mkBtnRow({
+  {"CLONE +X",Color3.fromRGB(80,20,50),Color3.fromRGB(110,30,75),function()xfm_cloneOffsetAxis("X")end},
+  {"CLONE +Y",Color3.fromRGB(20,65,20),Color3.fromRGB(30,95,30),function()xfm_cloneOffsetAxis("Y")end},
+  {"CLONE +Z",Color3.fromRGB(20,40,90),Color3.fromRGB(30,60,130),function()xfm_cloneOffsetAxis("Z")end},
+})
+mkBtn("♻  CLONE AUTO (geser +X)",Color3.fromRGB(55,0,80),Color3.fromRGB(80,0,115),xfm_clone,28)
+mkDiv()
+
+-- 8. TIPS
+mkSec("■  CARA PAKAI")
+local tipF=Instance.new("Frame",body)
+tipF.LayoutOrder=nextLO();tipF.Size=UDim2.new(1,0,0,0);tipF.AutomaticSize=Enum.AutomaticSize.Y
+tipF.BackgroundColor3=Color3.fromRGB(4,9,16);tipF.BackgroundTransparency=0.3;tipF.BorderSizePixel=0
+Instance.new("UICorner",tipF).CornerRadius=UDim.new(0,6)
+local tipS=Instance.new("UIStroke",tipF);tipS.Color=Color3.fromRGB(0,60,90)
+local tipL=Instance.new("TextLabel",tipF)
+tipL.Size=UDim2.new(1,-12,0,0);tipL.Position=UDim2.new(0,8,0,6)
+tipL.AutomaticSize=Enum.AutomaticSize.Y;tipL.BackgroundTransparency=1
+tipL.Text="[01] Klik KLIK PART → klik di viewport\n[02] Atau AMBIL DARI EXPLORER\n[03] SET = set nilai tepat\n[04] +/- = geser relatif\n[05] Grid & RotSnap → snap ke kelipatan\n[06] Clone → duplikat langsung geser"
+tipL.TextColor3=C.T2;tipL.Font=Enum.Font.Code;tipL.TextSize=9
+tipL.TextXAlignment=Enum.TextXAlignment.Left;tipL.TextWrapped=true
+local tipPad=Instance.new("UIPadding",tipF);tipPad.PaddingBottom=UDim.new(0,8)
+
+-- ══════════════════════════════════════
+-- DRAG PANEL
+-- ══════════════════════════════════════
+local pDrag=false;local pStartM=Vector2.zero;local pStartP=MF.Position
+dragH.InputBegan:Connect(function(i)
+  if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+    pDrag=true;pStartM=Vector2.new(i.Position.X,i.Position.Y);pStartP=MF.Position
+  end
+end)
+UIS.InputChanged:Connect(function(i)
+  if not pDrag then return end
+  if i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch then
+    local dx=i.Position.X-pStartM.X;local dy=i.Position.Y-pStartM.Y
+    MF.Position=UDim2.new(pStartP.X.Scale,pStartP.X.Offset+dx,pStartP.Y.Scale,pStartP.Y.Offset+dy)
+  end
+end)
+UIS.InputEnded:Connect(function(i)
+  if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+    pDrag=false
+  end
+end)
+
+-- ══════════════════════════════════════
+-- CLEANUP saat keluar
+-- ══════════════════════════════════════
+local lp=PLR.LocalPlayer
+if lp then
+  PLR.PlayerRemoving:Connect(function(p)
+    if p==lp then
+      pcall(function()if xfm.hl then xfm.hl:Destroy()end end)
+      pcall(function()if xfm.conn then xfm.conn:Disconnect()end end)
+    end
+  end)
+end
+
+print("[ Transform Panel v11.0 ] BY SYGKMUNII — LOADED OK")
